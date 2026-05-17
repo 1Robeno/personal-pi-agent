@@ -1,8 +1,9 @@
 /**
  * Oracle UI helpers.
  *
- * This file owns the terminal layout, progress widget, spinner state, and tool
- * result rendering. The tool wiring only decides when to call these helpers.
+ * This file owns Pi UI/TUI for Oracle: terminal layout, progress widget,
+ * spinner, status line, tool call/result rendering, Ctrl+C cancel wiring, and
+ * execution-scoped UI via `withOracleUi`.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -171,6 +172,40 @@ export function registerOracleCancelEditor(pi: ExtensionAPI, isOracleActive: () 
 			}),
 		);
 	});
+}
+
+/** Single entry to wire all Oracle Pi UI/TUI behavior (e.g. Ctrl+C cancel). */
+export function registerOracleUi(pi: ExtensionAPI, isOracleActive: () => boolean, cancelOracle: () => void) {
+	registerOracleCancelEditor(pi, isOracleActive, cancelOracle);
+}
+
+export type OracleUiHandle = {
+	update: (detail: string) => void;
+	finish: (status: "done" | "error", detail: string, markdown?: string) => void;
+	clear: () => void;
+};
+
+/**
+ * Owns Oracle UI lifecycle around a tool run: widget, status, working state.
+ * The callback receives the same controls `startOracleUi` returned; cleanup always clears working indicators.
+ */
+export async function withOracleUi<T>(
+	ctx: any,
+	question: string,
+	formatDuration: (ms: number) => string,
+	run: (ui: OracleUiHandle) => Promise<T>,
+): Promise<T> {
+	const oracleUi = startOracleUi(ctx, question, formatDuration);
+	const ui: OracleUiHandle = {
+		update: (detail) => oracleUi.update(detail),
+		finish: (status, detail, markdown) => oracleUi.finish(status, detail, markdown),
+		clear: () => oracleUi.clear(),
+	};
+	try {
+		return await run(ui);
+	} finally {
+		oracleUi.clearWorking();
+	}
 }
 
 export function renderOracleCall(theme: any) {

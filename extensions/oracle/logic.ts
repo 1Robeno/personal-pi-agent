@@ -3,9 +3,14 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { buildPrompt, MODEL, type OracleParams, REASONING } from "./agent";
+import {
+	buildPrompt,
+	MODEL,
+	type OracleParams,
+	REASONING,
+	SANDBOX,
+} from "./agent";
 import { registerOracleTool } from "./tool";
-import { registerOracleCancelEditor } from "./widget";
 
 export type OracleControl = {
 	action: "INFORMATION" | "IMPLEMENT";
@@ -129,7 +134,7 @@ async function runCodexOracle(
 		`model_reasoning_effort=${REASONING}`,
 		"--skip-git-repo-check",
 		"--sandbox",
-		"read-only",
+		SANDBOX,
 		"--cd",
 		cwd,
 		"--output-last-message",
@@ -207,10 +212,11 @@ async function runCodexOracle(
 }
 
 export default function oracleExtension(pi: ExtensionAPI) {
-	registerOracleCancelEditor(pi, hasActiveOracle, cancelActiveOracle);
 	registerOracleTool(pi, {
 		formatControlForAgent,
 		formatDuration,
+		hasActiveOracle,
+		cancelActiveOracle,
 		runCodexOracle,
 	});
 }
