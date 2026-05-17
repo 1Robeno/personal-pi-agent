@@ -1,0 +1,29 @@
+bin/
+auth.json
+sessions/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Credential-style filenames (any directory)
+**/credentials*.json
+secrets.json
+token.json
+
+# Keys, certs, keystores
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_rsa*
+id_ecdsa*
+
+# Local overrides (often hold secrets)
+docker-compose.override.yml
+.netrc
+.auth.toml
