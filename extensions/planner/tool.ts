@@ -1,0 +1,119 @@
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+import type { PlannerResult } from "./logic";
+import { registerPlannerUi, renderPlannerCall, renderPlannerResult, withPlannerUi } from "./widget";
+
+const PLANNER_PARAMS = Type.Object({
+	task: Type.String({
+		description: "Clear description of what the user wants planned. Be specific about the goal and scope.",
+	}),
+});
+
+type PlannerToolDeps = {
+	formatDuration: (ms: number) => string;
+	hasActivePlanner: () => boolean;
+	cancelActivePlanner: () => void;
+	runCodexPlanner: (
+		sessionContext: string,
+		task: string,
+		planPath: string,
+		cwd: string,
+		signal: AbortSignal | undefined,
+		onProgress: (text: string) => void,
+	) => Promise<PlannerResult>;
+};
+
+function textFromContent(content: unknown): string {
+	if (typeof content === "string") return content;
+	if (!Array.isArray(content)) return "";
+	return content
+		.map((block) => {
+			if (!block || typeof block !== "object" || !("type" in block)) return "";
+			if (block.type === "text" && "text" in block && typeof block.text === "string") return block.text;
+			if (block.type === "image") return "[image]";
+			return "";
+		})
+		.filter(Boolean)
+		.join("\n");
+}
+
+function serializeSession(ctx: any): string {
+	const branch: any[] = (ctx as any).sessionManager?.getBranch?.() ?? [];
+	const messages = branch
+		.filter((e) => e.type === "message")
+		.map((e) => e.message)
+		.filter((m) => m.role === "user" || m.role === "assistant");
+
+	return messages
+		.map((m) => {
+			const content = textFromContent(m.content).trim();
+			return `${m.role.toUpperCase()}:\n${content}`;
+		})
+		.filter((s) => !s.endsWith(":\n"))
+		.join("\n\n---\n\n");
+}
+
+function generatePlanPath(task: string): string {
+	const now = new Date();
+	const mmdd = `${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+	const slug = task
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.slice(0, 35);
+	return `.docs/plans/${mmdd}_${slug}.md`;
+}
+
+export function registerPlannerTool(pi: ExtensionAPI, deps: PlannerToolDeps) {
+	registerPlannerUi(pi, deps.hasActivePlanner, deps.cancelActivePlanner);
+
+	pi.registerTool({
+		name: "planner",
+		label: "Planner",
+		description:
+			"Generate a detailed markdown plan. Reads the full session context automatically and writes the plan to .docs/plans/. Use when the user asks to plan, design, or architect something non-trivial.",
+		promptSnippet: "Generate a detailed plan for the user's goal. Pass a clear task description and key files — full session context is read automatically.",
+		promptGuidelines: [
+			"Use planner when the user asks for a plan, design document, or architecture breakdown.",
+			"Pass a focused task description. The planner reads the full session context on its own.",
+			"After the planner completes, tell the user the plan was saved and where.",
+		],
+		parameters: PLANNER_PARAMS,
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+			return await withPlannerUi(ctx, params.task, deps.formatDuration, async (ui) => {
+				try {
+					const sessionContext = serializeSession(ctx);
+					const planPath = generatePlanPath(params.task);
+
+					const result = await deps.runCodexPlanner(
+						sessionContext,
+						params.task,
+						planPath,
+						ctx.cwd,
+						signal,
+						ui.update,
+					);
+
+					ui.finish("done", `Saved to ${result.planPath}`);
+					ui.clear();
+
+					return {
+						content: [{ type: "text", text: `Plan saved to ${result.planPath}\n\n${result.answer}` }],
+						details: { ...result },
+					};
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					ui.finish("error", message);
+					ui.clear();
+					throw new Error(`Planner failed: ${message}`);
+				}
+			});
+		},
+		renderCall(args, theme) {
+			return renderPlannerCall(args, theme);
+		},
+		renderResult(result, { isPartial }, theme) {
+			return renderPlannerResult(result, isPartial, theme);
+		},
+	});
+}

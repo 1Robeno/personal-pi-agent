@@ -118,29 +118,4 @@ export default function (pi) {
       };
     },
   });
-
-  // --- Tool 4: Find similar pages ---
-  pi.registerTool({
-    name: "exa_similar",
-    description: "Find pages similar to a given URL. Good for finding related docs, articles, or alternatives.",
-    parameters: Type.Object({
-      url: Type.String({ description: "Reference URL" }),
-      numResults: Type.Optional(Type.Number({ description: "Number of results (default 3)" })),
-    }),
-    async execute(_toolCallId, { url, numResults = 3 }) {
-      const result = await exa.findSimilar(url, {
-        numResults,
-        excludeSourceDomain: true,
-        contents: { highlights: { maxCharacters: 1000 } },
-      });
-
-      const formatted = result.results.map((r) =>
-        `## ${r.title}\n${r.url}\n\n${r.highlights?.join("\n") ?? ""}`
-      ).join("\n\n---\n\n");
-
-      return {
-        content: [{ type: "text", text: formatted }],
-      };
-    },
-  });
 }
