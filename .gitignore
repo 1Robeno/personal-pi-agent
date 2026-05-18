@@ -27,3 +27,6 @@ id_ecdsa*
 docker-compose.override.yml
 .netrc
 .auth.toml
+
+
+settings.json
