@@ -93,8 +93,7 @@ export function registerPlannerTool(pi: ExtensionAPI, deps: PlannerToolDeps) {
 			"Create a plan from the current session. Pass the goal, scope, constraints, important files, and a short subject-specific title for the filename.",
 		promptGuidelines: [
 			"Use planner when the plan itself is the deliverable.",
-			"Pass a focused task with the goal, scope, constraints, and any important files.",
-			"Pass a short subject-specific title for the filename, e.g. 'auth-migration' or 'dashboard-redesign'.",
+			"Pass a focused task with the goal, scope, constraints, important files, title for the filename, e.g. 'auth-migration' or 'dashboard-redesign'.",
 			"Do not repeat session history; full session context is read automatically.",
 		],
 		parameters: PLANNER_PARAMS,
