@@ -8,6 +8,7 @@ CLI Tools
 `vercel` - for Vercel, the preffered deployment platform.
 `doppler` - for Doppler, the primary secrets manager.
 `neon` - for Neon databases, on a serverless Postgres platform.
+`agent-browser` - for web broswing use cases
 exa - use for web search and web fetch needs
 
 Tool Install
