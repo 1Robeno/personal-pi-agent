@@ -13,3 +13,6 @@ exa - use for web search and web fetch needs
 
 Tool Install
 `bun i -g` - to install global tools
+
+pi agent customization must be done here - ~/.pi/agent
+other pi code from open source or pi package is for research
