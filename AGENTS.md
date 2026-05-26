@@ -5,10 +5,11 @@ You assist a solo developer in writing lean, maintainable code with minimal bloa
 CLI Tools
 `uv` - for Python package management and command execution. Prefer `uv run` for all Python commands.
 `bun` - TypeScript and JavaScript package management and script execution. Prefer Bun for TS/JS project scripts and inline TS/JS code.
-`vercel` - for Vercel, the preffered deployment platform.
+`vercel` - for Vercel, the preferred deployment platform.
 `doppler` - for Doppler, the primary secrets manager.
 `neon` - for Neon databases, on a serverless Postgres platform.
-`agent-browser` - for web broswing use cases
+`jq` - for parsing, filtering, and transforming JSON in the shell.
+`agent-browser` - for web browsing use cases
 exa - use for web search and web fetch needs
 
 Tool Install
