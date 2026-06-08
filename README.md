@@ -14,6 +14,7 @@ extensions/
   explorer/        — Cursor agent (composer-2.5-fast) for deep codebase navigation
   planner/         — Codex (gpt-5.5, high reasoning) to write structured plans to disk
   exa/             — Web search and fetch tools via the Exa API
+  linear/          — Linear GraphQL tools for teams, issues, comments, and raw queries
   minimal/         — Compact footer: context gauge + model + thinking level
 settings.json      — Pi settings (provider, model, theme)
 AGENTS.md          — Standing instructions injected into every session
@@ -75,6 +76,16 @@ Requires `EXA_API_KEY` in the environment (or exported in `~/.bashrc`).
 Load with: pi -e extensions/exa
 ```
 
+### linear
+
+Registers direct Linear GraphQL tools (`linear_teams`, `linear_search_issues`, `linear_create_issue`, etc.). This avoids adding generic MCP support just for Linear.
+
+Requires `LINEAR_API_KEY` (personal API key) or an OAuth/access-token env var. Run `/linear-auth` after `/reload` to test.
+
+```
+Load with: pi -e extensions/linear
+```
+
 ### minimal
 
 A compact terminal footer that renders a 10-block context usage gauge, the active model ID, and the current thinking level.
@@ -85,7 +96,7 @@ Load with: pi -e extensions/minimal
 
 ## Setup
 
-**Prerequisites**: Pi coding agent, `bun`, `codex` CLI, Cursor `agent` CLI, `EXA_API_KEY`.
+**Prerequisites**: Pi coding agent, `bun`, `codex` CLI, Cursor `agent` CLI, `EXA_API_KEY`, optional `LINEAR_API_KEY`.
 
 Clone into `~/.pi/agent` (Pi's default agent directory):
 
@@ -96,7 +107,7 @@ git clone <repo-url> ~/.pi/agent
 Load extensions at startup:
 
 ```sh
-pi -e extensions/oracle -e extensions/explorer -e extensions/planner -e extensions/exa -e extensions/minimal
+pi -e extensions/oracle -e extensions/explorer -e extensions/planner -e extensions/exa -e extensions/linear -e extensions/minimal
 ```
 
 Or add them to your Pi launch alias/config.

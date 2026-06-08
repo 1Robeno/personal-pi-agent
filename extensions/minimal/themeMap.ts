@@ -12,12 +12,12 @@
  */
 
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { basename } from "node:path";
+import { basename, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // ── Theme assignments ──────────────────────────────────────────────────────
 //
-// Key   = extension filename without extension (matches extensions/<key>.ts)
+// Key   = extension filename without extension, or directory name for extensions/<key>/index.ts
 // Value = theme name from .pi/themes/<value>.json
 //
 export const THEME_MAP: Record<string, string> = {
@@ -32,7 +32,8 @@ export const THEME_MAP: Record<string, string> = {
 	"pure-focus":         "everforest",       // calm, distraction-free
 	"purpose-gate":       "tokyo-night",      // intentional, sharp focus
 	"session-replay":     "catppuccin-mocha", // soft, reflective history
-	"subagent-widget":    "cyberpunk",        // multi-agent futuristic
+	"editor":             "cyberpunk",        // editor subagents
+	"subagent-widget":    "cyberpunk",        // legacy name
 	"system-select":      "catppuccin-mocha", // soft selection UI
 	"theme-cycler":       "synthwave",        // neon, it's a theme tool
 	"tilldone":           "everforest",       // task-focused calm
@@ -42,10 +43,11 @@ export const THEME_MAP: Record<string, string> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-/** Derive the extension name (e.g. "minimal") from its import.meta.url. */
+/** Derive the extension name (e.g. "minimal" or "explorer") from its import.meta.url. */
 function extensionName(fileUrl: string): string {
 	const filePath = fileUrl.startsWith("file://") ? fileURLToPath(fileUrl) : fileUrl;
-	return basename(filePath).replace(/\.[^.]+$/, "");
+	const name = basename(filePath).replace(/\.[^.]+$/, "");
+	return name === "index" ? basename(dirname(filePath)) : name;
 }
 
 // ── Theme ──────────────────────────────────────────────────────────────────
@@ -93,10 +95,10 @@ export function applyExtensionTheme(fileUrl: string, ctx: ExtensionContext): boo
  * Read process.argv to find the first -e / --extension flag value.
  *
  * When Pi is launched as:
- *   pi -e extensions/subagent-widget.ts -e extensions/pure-focus.ts
+ *   pi -e extensions/editor -e extensions/pure-focus.ts
  *
  * process.argv contains those paths verbatim. Every stacked extension calls
- * this and gets the same answer ("subagent-widget"), so all setTitle calls
+ * this and gets the same answer ("editor"), so all setTitle calls
  * are idempotent — no shared state or deduplication needed.
  *
  * Returns null if no -e flag is present (e.g. plain `pi` with no extensions).
@@ -105,7 +107,7 @@ function primaryExtensionName(): string | null {
 	const argv = process.argv;
 	for (let i = 0; i < argv.length - 1; i++) {
 		if (argv[i] === "-e" || argv[i] === "--extension") {
-			return basename(argv[i + 1]).replace(/\.[^.]+$/, "");
+			return extensionName(argv[i + 1]);
 		}
 	}
 	return null;

@@ -89,7 +89,18 @@ function setExplorerWidget(ctx: any, state: ExplorerWidgetState, formatDuration:
 	);
 }
 
+function createNoopExplorerUi() {
+	return {
+		update(_detail: string) {},
+		finish(_status: "done" | "error", _detail: string, _markdown?: string) {},
+		clear() {},
+		clearWorking() {},
+	};
+}
+
 export function startExplorerUi(ctx: any, message: string, formatDuration: (ms: number) => string) {
+	if (ctx.mode !== "tui") return createNoopExplorerUi();
+
 	const state: ExplorerWidgetState = {
 		status: "running",
 		message: message || "Exploring...",
@@ -166,6 +177,8 @@ export function registerExplorerCancelEditor(
 	cancelExplorer: () => void,
 ) {
 	pi.on("session_start", (_event, ctx) => {
+		if (ctx.mode !== "tui") return;
+
 		ctx.ui.setEditorComponent((tui: any, theme: any, keybindings: any) =>
 			new ExplorerAwareEditor(tui, theme, keybindings, isExplorerActive, () => {
 				cancelExplorer();

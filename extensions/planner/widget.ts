@@ -54,7 +54,18 @@ function createPlannerWidget(state: PlannerWidgetState, formatDuration: (ms: num
 	};
 }
 
+function createNoopPlannerUi() {
+	return {
+		update(_detail: string) {},
+		finish(_status: "done" | "error", _detail: string) {},
+		clear() {},
+		clearWorking() {},
+	};
+}
+
 export function startPlannerUi(ctx: any, message: string, formatDuration: (ms: number) => string) {
+	if (ctx.mode !== "tui") return createNoopPlannerUi();
+
 	const state: PlannerWidgetState = {
 		status: "running",
 		message: message || "Planning...",
@@ -127,6 +138,8 @@ export function registerPlannerUi(
 	cancelPlanner: () => void,
 ) {
 	pi.on("session_start", (_event, ctx) => {
+		if (ctx.mode !== "tui") return;
+
 		ctx.ui.setEditorComponent((tui: any, theme: any, keybindings: any) =>
 			new PlannerAwareEditor(tui, theme, keybindings, isPlannerActive, () => {
 				cancelPlanner();

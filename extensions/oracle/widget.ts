@@ -90,7 +90,18 @@ function setOracleWidget(ctx: any, state: OracleWidgetState, formatDuration: (ms
 	);
 }
 
+function createNoopOracleUi() {
+	return {
+		update(_detail: string) {},
+		finish(_status: "done" | "error", _detail: string, _markdown?: string) {},
+		clear() {},
+		clearWorking() {},
+	};
+}
+
 export function startOracleUi(ctx: any, message: string, formatDuration: (ms: number) => string) {
+	if (ctx.mode !== "tui") return createNoopOracleUi();
+
 	const state: OracleWidgetState = {
 		status: "running",
 		message: message || "Reviewing...",
@@ -164,6 +175,8 @@ class OracleAwareEditor extends CustomEditor {
 
 export function registerOracleCancelEditor(pi: ExtensionAPI, isOracleActive: () => boolean, cancelOracle: () => void) {
 	pi.on("session_start", (_event, ctx) => {
+		if (ctx.mode !== "tui") return;
+
 		ctx.ui.setEditorComponent((tui: any, theme: any, keybindings: any) =>
 			new OracleAwareEditor(tui, theme, keybindings, isOracleActive, () => {
 				cancelOracle();

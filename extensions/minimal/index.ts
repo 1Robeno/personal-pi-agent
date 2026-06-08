@@ -59,6 +59,8 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		thinkingLevel = pi.getThinkingLevel();
 		applyExtensionDefaults(import.meta.url, ctx);
+		if (ctx.mode !== "tui") return;
+
 		ctx.ui.setFooter((_tui, theme, footerData) => ({
 			dispose: () => {},
 			invalidate() {},
