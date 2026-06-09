@@ -1,7 +1,3 @@
-## Role
-
-Assist a solo developer and solo founder.
-
 ## Coding Principles
 
 - Write lean, maintainable code with minimal bloat.
