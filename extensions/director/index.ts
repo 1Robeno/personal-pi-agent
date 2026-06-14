@@ -50,6 +50,7 @@ function restoreMode(ctx: ExtensionContext): DirectorMode | undefined {
 
 function validMode(value: string | undefined): DirectorMode | undefined {
 	const normalized = value?.trim().toLowerCase();
+	if (normalized === "on") return "strict";
 	if (normalized === "off" || normalized === "advisory" || normalized === "strict") return normalized;
 	return undefined;
 }
@@ -140,25 +141,46 @@ export default function directorExtension(pi: ExtensionAPI) {
 		}
 	}
 
-	pi.registerCommand("director", {
-		description: "Set director mode: /director strict|advisory|off",
-		handler: async (args, ctx) => {
-			const requested = validMode(args);
-			if (requested) {
-				await setMode(requested, ctx, { notify: true });
-				return;
-			}
+	async function handleDirectorCommand(args: string | undefined, ctx: ExtensionContext) {
+		const normalized = args?.trim().toLowerCase();
+		if (normalized === "help") {
+			ctx.ui.notify(
+				`Director mode (${mode})\n\n/director or /d toggles strict director mode on/off.\n/director on|strict: main agent becomes a verifier/delegator, uses ${DIRECTOR_MODEL_ID} (${DIRECTOR_THINKING}), and direct tools are limited to bash plus explorer, planner, oracle, workers, and Linear.\n/director advisory: keeps normal tools but nudges delegation.\n/director off: restores normal tools.`,
+				"info",
+			);
+			return;
+		}
 
-			const choice = await ctx.ui.select("Director mode", [
+		if (!normalized || normalized === "toggle") {
+			await setMode(mode === "off" ? "strict" : "off", ctx, { notify: true });
+			return;
+		}
+
+		const requested = validMode(args);
+		if (requested) {
+			await setMode(requested, ctx, { notify: true });
+			return;
+		}
+
+		const choice = await ctx.ui.select("Director mode", [
 				"strict — delegate execution; main gets bash + specialist tools",
 				"advisory — prefer delegation but keep current tools",
 				"off — restore normal tools",
 			]);
-			if (!choice) return;
-			await setMode(choice.startsWith("strict") ? "strict" : choice.startsWith("advisory") ? "advisory" : "off", ctx, {
-				notify: true,
-			});
-		},
+		if (!choice) return;
+		await setMode(choice.startsWith("strict") ? "strict" : choice.startsWith("advisory") ? "advisory" : "off", ctx, {
+			notify: true,
+		});
+	}
+
+	pi.registerCommand("director", {
+		description: "Toggle director mode, or set it: /director [on|off|strict|advisory|toggle|help]",
+		handler: handleDirectorCommand,
+	});
+
+	pi.registerCommand("d", {
+		description: "Toggle director mode on/off",
+		handler: handleDirectorCommand,
 	});
 
 	pi.on("before_agent_start", async (event) => {

@@ -354,6 +354,7 @@ export default function (pi: ExtensionAPI) {
 		promptSnippet: "Spawn a worker subagent for medium-to-large code changes, research-backed implementation, refactors, tests, or independent execution work silos",
 		promptGuidelines: [
 			"Use subagent_create as a worker subagent when medium-to-large code changes, refactors, migrations, test additions, research-backed implementation, or other execution work can be delegated.",
+			"Call subagent_create alone; the worker result will arrive as a follow-up message when it finishes.",
 			"Use subagent_create to develop independent work silos in parallel. Spawn multiple workers when tasks can be split cleanly by file, component, feature, or concern.",
 			"Give each worker a complete, bounded task with target files, constraints, expected output, and verification expectations. Avoid overlapping edits across workers unless coordination is explicit.",
 			"Do not use subagent_create for simple read-only investigation or tiny edits; use direct bash or explorer instead.",
@@ -366,6 +367,7 @@ export default function (pi: ExtensionAPI) {
 			return {
 				content: [{ type: "text", text: `Worker #${state.id} spawned with ${WORKER_MODEL_ID}:${WORKER_THINKING}. It can use ${WORKER_TOOLS.join(", ")}.` }],
 				details: toPersisted(state),
+				terminate: true,
 			};
 		},
 	});
@@ -375,7 +377,10 @@ export default function (pi: ExtensionAPI) {
 		label: "Worker Continue",
 		description: "Continue an existing worker conversation using its persistent session. Use this for follow-up edits, fixes, research, or review after a worker finishes. Returns immediately; the result is delivered as a follow-up message.",
 		promptSnippet: "Continue an existing worker by ID for follow-up execution, edits, research, or refinement",
-		promptGuidelines: ["Use subagent_continue to give follow-up instructions to an existing worker after it finishes, especially for fixes, refinements, or additional edits in the same work silo."],
+		promptGuidelines: [
+			"Use subagent_continue to give follow-up instructions to an existing worker after it finishes, especially for fixes, refinements, or additional edits in the same work silo.",
+			"Call subagent_continue alone; the worker result will arrive as a follow-up message when it finishes.",
+		],
 		parameters: Type.Object({
 			id: Type.Number({ description: "Worker ID" }),
 			prompt: Type.String({ description: "Follow-up prompt or new instructions" }),
@@ -389,6 +394,7 @@ export default function (pi: ExtensionAPI) {
 			return {
 				content: [{ type: "text", text: `Worker #${args.id} continuing in background.` }],
 				details: toPersisted(state),
+				terminate: true,
 			};
 		},
 	});

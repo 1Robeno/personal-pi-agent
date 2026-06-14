@@ -33,7 +33,8 @@ Turns the main agent into a director/verifier. In strict mode, the main agent ge
 ```
 Model:     gpt-5.5
 Reasoning: high
-Command:   /director strict|advisory|off
+Command:   /director [on|off|strict|advisory|toggle|help]  (no args toggles strict/off)
+Shortcut:  /d
 Load with: pi -e extensions/director
 ```
 
